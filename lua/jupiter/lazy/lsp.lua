@@ -39,6 +39,10 @@ return {
      -- require('lspconfig').ocamllsp.setup({})
      require('lspconfig').pyright.setup{}
      require('lspconfig').rust_analyzer.setup{}
+     require'lspconfig'.html.setup{}
+     require'lspconfig'.cssls.setup{}
+     require'lspconfig'.ts_ls.setup{}
+     require'lspconfig'.svelte.setup{}
      require'lspconfig'.lua_ls.setup {
          on_init = function(client)
              if client.workspace_folders then
