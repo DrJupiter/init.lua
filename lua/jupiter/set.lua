@@ -29,4 +29,3 @@ vim.opt.wrap = false         -- Enables/Disables line wrapping
 
 
 
-
