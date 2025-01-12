@@ -1,0 +1,715 @@
+#NR --> NEEDS TO BE RENEWED
+
+global !p
+def complete(t, opts):
+	if t:
+# I'm not sure if this is safe. It depends on what [len(t):] indexing for a string means.
+		opts = [ m[len(t):] for m in opts if m.startswith(t) ]
+	if len(opts) == 1:
+		return opts[0]
+	elif len(opts) == 0:
+		return ""
+	return '(' + '|'.join(opts) + ')'
+endglobal
+
+# try or regex and match
+global !p
+def numberplus(num,strinput):
+	try:
+		number = num + int(strinput)
+		return str(number)
+	except ValueError:
+		return "NaN"	
+endglobal
+
+#global !p
+#import rust_sp_snippet_finder as st
+#from pathlib import Path
+#home = str(Path.home())
+#snippet_path = home + "/.config/nvim/UltiSnips/tex.snippets"
+#snippet_list = st.init_py(snippet_path)
+#endglobal
+
+global !p
+def leftright(marker,received,left,right):
+	if len(received) == 0:
+		received_marker = None
+	else:
+		received_marker = received[0]
+	if marker == received_marker:
+		if len(received) > 1:
+			return f"\\left{left}{received[1:]}\\right{right}"
+		else:
+			return f"\\left{left}\\right{right}"
+	else:
+		return f"{left}{right}"
+endglobal
+
+#snippet "testpy(.*)?" "" r
+#$1`!p snip.rv=match.group(1)`
+#endsnippet
+
+#snippet  "" 
+#`!p snip.rv=leftright('\\',,'(',')')`}
+#endsnippet
+
+snippet "be(gin)?( (\S+))?" "begin{} / end{}" br
+\begin{${1:`!p
+snip.rv = match.group(3) if match.group(2) is not None else "something"`}}
+${2:${VISUAL}}
+\end{$1}$0
+endsnippet
+
+###################### Environments ##################################
+
+snippet sign "Signature"
+Yours truly,
+
+Klaus Jupiter Bentzen
+endsnippet
+
+
+snippet title "Title"
+\title{${1:title}}
+\date{${2:date}}
+\author{${3:author}}$0
+endsnippet
+
+snippet beg "begin{} / end{}" bA
+\begin{$1}
+$0
+\end{$1}
+endsnippet
+
+snippet \emp "emph {}" A 
+\emph{$1}$0
+endsnippet
+
+snippet template "Basic Article Template" b
+\documentclass[12pt,a4paper]{report}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,width=150mm,top=25mm,bottom=25mm]{geometry}
+\usepackage{graphicx}
+\usepackage[]{amsmath}
+\usepackage[]{gensymb}
+\usepackage[]{amssymb}
+\usepackage[]{amsthm}
+\usepackage[svgnames]{xcolor}
+\usepackage{xfrac}
+\usepackage{float}
+\usepackage{hyperref}
+$1
+
+\let\oldcolorbox\colorbox%
+\renewcommand{\colorbox}[2]{\oldcolorbox{#1}{\parbox{\textwidth}{#2}}}
+
+\setlength{\parindent}{0em}
+
+\begin{document}
+
+$0
+
+\end{document}
+endsnippet
+
+#NR
+snippet titlepage "Titlepage"
+% Start of Titlepage
+\begin{titlepage}
+	\centering
+	\includegraphics[width=0.15\textwidth]{${1:image}}\par\vspace{1cm}
+	{\scshape\LARGE ${2:Organization} \par}
+	\vspace{1cm}
+	{\scshape\Large ${3:Assignment} \par}
+	\vspace{1.5cm}
+	{\huge\bfseries ${4:Title}\par}
+	\vspace{1.3cm}
+	{\scshape\Large ${5:Topic}\par}
+	\vspace{2cm}
+	{\Large\itshape ${6:Author}\par}
+	\vfill
+	${7:Shoutouts}\vspace{0.3cm}\par
+	${8:Name}\textsc{${9:LastName}} \& ${10:Name}\textsc{${11:LastName}}
+
+	\vfill
+
+	{\large \today\par}
+\end{titlepage}
+
+% End of Titlepage
+endsnippet
+
+snippet fancyhdr "Fancy header"
+\usepackage[]{fancyhdr}
+\usepackage{lastpage}
+% Fancyhdr setttings
+
+\fancypagestyle{stylish}{
+\fancyhead{}
+\fancyhead[L]{$1}
+\fancyhead[R]{${2:Klaus Jupiter Bentzen}$3}
+\fancyfoot{}
+\fancyfoot[R]{}
+\fancyfoot[L]{}
+\fancyfoot[C]{\thepage\ af \pageref{LastPage}}
+}
+%Fancyhdr settings end$0
+endsnippet
+
+snippet pa "Package"
+\usepackage[${1:options}]{${2:package}}$0
+endsnippet
+
+snippet coloredboxes "Colored Boxes"
+\usepackage[]{tcolorbox}
+
+\definecolor{titlecolor}{cmyk}{0.03,0.1,0,1}
+\definecolor{textcolor}{cmyk}{0.0,0.27,0.07,0.94}
+\definecolor{backcolor}{cmyk}{0.00,0.00,0.00,0.0}
+
+\definecolor{skyblue}{cmyk}{0.21,0.02,0,0.0}
+\definecolor{backskyblue}{cmyk}{0.29,0.04,0,0.02}
+\newtcolorbox{defbox}[1]{colback=backcolor,colframe=backskyblue,fonttitle=\bfseries,title=Definition: #1,coltext=textcolor,coltitle=titlecolor,colbacktitle=skyblue}
+
+
+\definecolor{lightpurple}{cmyk}{0.03,0.11,0,0.01}
+\definecolor{backlightpurple}{cmyk}{0.07,0.20,0,0.00}
+\newtcolorbox{corbox}[1]{colback=backcolor,colframe=backlightpurple,fonttitle=\bfseries,title=Corollary: #1,coltext=textcolor,coltitle=titlecolor,colbacktitle=lightpurple}
+
+\definecolor{lightyellow}{cmyk}{0.02,0.00,0.71,0.01}
+\definecolor{backlightyellow}{cmyk}{0.00,0.02,0.38,0.01}
+\newtcolorbox{exbox}[1]{colback=backcolor,colframe=backlightyellow,fonttitle=\bfseries,title=Example: #1,coltext=textcolor,coltitle=titlecolor,colbacktitle=lightyellow}
+endsnippet
+
+snippet \i "Item" 
+\item $0
+endsnippet
+
+snippet un "Underline" i
+\underline{$1}$0
+endsnippet
+
+snippet bf "Text to bold\ textbf"
+\textbf{$1}$0
+endsnippet
+
+
+#NR
+snippet table "Table environment" b
+\begin{table}[${1:htpb!}]
+	\centering
+	\caption{${2:caption}}
+	\label{tab:${3:label}}
+	\begin{tabular}{${5:c}}
+	$0${5/((?<=.)c|l|r)|./(?1: &)/g}
+	\end{tabular}
+\end{table}
+endsnippet
+
+#NR
+snippet fig "Figure environment" b
+\begin{figure}[${1:htpb}]
+	\centering
+	${2:\includegraphics[scale=0.5]{$3}}
+	\caption{${4:$3}}
+	\label{fig:${5:${3/\W+/-/g}}}
+\end{figure}
+endsnippet
+
+snippet \img "Graphics"
+\includegraphics[scale=${1:0.5}]{./img/$2}$0
+endsnippet
+
+snippet vs "vspace" bA
+\\\\ \\vspace{0.3cm}
+endsnippet
+
+snippet "[\\|']sec" "Section |\sec|" rbA
+\section{$1}
+$0
+endsnippet
+
+snippet \ssec "Subsection" bA
+\subsection{$1}
+$0
+endsnippet
+
+snippet \sssec "Subsubsection" bA
+\subsubsection{$1}
+$0
+endsnippet
+
+
+snippet algobox "Algorithm box" bA
+\begin{algobox}{${1:name}}
+$2
+\end{algobox}$0
+endsnippet
+
+
+snippet exbox "Example box" bA
+\begin{exbox}{${1:name}}
+$2
+\end{exbox}$0
+endsnippet
+
+snippet defbox "Definition box" bA
+\begin{defbox}{${1:name}}
+$2
+\end{defbox}$0
+endsnippet
+
+snippet corbox "Definition box" bA
+\begin{corbox}{${1:name}}
+$2
+\end{corbox}$0
+endsnippet
+
+
+###################### MATH ##########################################
+
+snippet sd "Underscore" iA
+_{$1}$0
+endsnippet
+
+snippet sfs "Lift Caret circumflex" iA
+^{$1}$0
+endsnippet
+
+snippet swd "Temp underscore" iA
+_{($1)}$0
+endsnippet
+
+snippet hio "Squiguly brackets" iA
+\{$1\}$0
+endsnippet
+
+snippet jkl "Inline math" iA
+\($1\)$0
+endsnippet
+
+snippet hjk "New line math" bA
+\[$0\]
+endsnippet
+
+snippet hh "cdot" iA
+\cdot
+endsnippet
+
+snippet \fr "fraction" iA
+\\frac{$1}{$2}$0
+endsnippet
+
+snippet \rfc "cfrac" iA
+\cfrac{$1}{$2}$0
+endsnippet
+
+snippet vec! "Vector" A
+\begin{$1matrix} $2 \\\\ $3 \\\\ $4 \end{$1matrix} $0 
+endsnippet
+
+snippet \sum "Sum" iA
+\sum_{k=$1}^{$2} \left($3\right)$0
+endsnippet
+
+snippet \text "text in math" i
+\text{$1}$0
+endsnippet
+
+snippet \floor "floor" i
+\lfloor $1 \rfloor$0
+endsnippet
+
+snippet ss "Proper Subset" i
+\subset
+endsnippet
+
+snippet sseq "Subset" i
+\subseteq
+endsnippet
+
+snippet mbb "mathbb" iA
+\mathbb{$1}$0
+endsnippet
+
+snippet mbf "mathbf" iA
+\mathbf{$1}$0
+endsnippet
+
+snippet mcc "mathcal" iA
+\mathcal{$1}$0
+endsnippet
+
+snippet \sqrt "sqrt" iA
+\sqrt{$1}$0
+endsnippet
+
+snippet \int "Integral" iA
+\int_{$1}^{$2}$0
+endsnippet
+
+snippet \diff "Diferentiation" iA
+\cfrac{d $1^{$2}}{d $3^{$4}}$0
+endsnippet
+
+snippet \pdiff "Diferentiation" iA
+\cfrac{\partial $1^{$2}}{\partial $3^{$4}}$0
+endsnippet
+
+snippet \vv "Verbatum" iA
+\verb|$1|$0
+endsnippet
+
+#snippet \pdiff "Diferentiation" iA
+#\cfrac{\partial^{$2}}{\partial $1^{$2}}$0
+#endsnippet
+
+################## PHYSICS ###########################################
+
+###### MISCELLANEOUS 
+
+#NR
+snippet fdef "Define n" bA
+jkl$1 prarrow$2 jkl$3
+vs$0
+endsnippet
+
+snippet frule "Line" bA
+\rule{\textwidth}{1 mm}
+endsnippet
+
+snippet fopq "Opgave" bA
+${1:Number} \colorbox{${2:PowderBlue}}{${3:text}}$0
+endsnippet
+
+snippet fopa "Opgave" bA
+${1:Number} \oldcolorbox{${2:Lime}}{${3:text}}$0
+endsnippet
+
+snippet flist "List enviroment" bA
+\begin{list}{${1:index}}{${2:title}}
+$0
+\end{list}
+endsnippet
+
+snippet salign "fysik udregning"
+\begin{align*}
+$0
+\end{align*}
+endsnippet
+
+snippet lalign "fysik udregning"
+\begin{align}
+$0
+\end{align}
+endsnippet
+###### TEMPERATURE
+
+snippet ftc "Temperature Celsius" iA
+C\degree
+endsnippet
+
+snippet fvarme "Q = HEAT, C = HEAT CAPACITY, T = CHANGE IN TEMPERATURE" iA
+Q = C \cdot \Delta T
+endsnippet
+
+snippet fspecificvarmekapacitet "DEFINITION C" iA
+C = m \cdot c
+endsnippet
+
+snippet fspecificsmeltevarme "Q = HEAT, m = MASS, Ls = SPECIFIC SMELTEVARME" iA
+Q = m \cdot L_{s}
+endsnippet
+
+snippet fspecificfordampningsvarme "Q = HEAT, m = MASS, Lf = SPECIFIC FORDAMPNINGSVARME" iA
+Q = m \cdot L_{f}
+endsnippet
+
+snippet fnyttevirkning "NYTTEVIRKNING" iA
+\eta = \cfrac{E_{nytte}}{E_{\text{tilført}}}
+endsnippet
+
+
+###### ELECTRICITY
+
+snippet "fstr[ø|']+mstyrke" "Strømstyrke |fstrømstyrke|" riA
+I = \cfrac{\delta q}{\delta t}
+endsnippet
+
+snippet feelektrisk "E = ELECTRICENERGY, U = SPÆNDINGSFALD, q = LADNING" iA
+E = U \cdot q
+endsnippet
+
+snippet feleffekt "P = EFFEKT, U = SPÆNDINGSFALD, I = STRØMSTYRKE" iA
+P = U \cdot I
+endsnippet
+
+snippet fohm "Ohms law" iA
+U = R \cdot I
+endsnippet
+
+snippet fefelt "Elektriskfelt, d = AFSTAND MELLEM TO PARALLELLE PLADER" iA
+E = \frac{U}{d}
+endsnippet
+
+snippet fpunktefelt "Elektriskfelt omkring punkt" iA
+E = k_{c} \cdot \frac{Q}{r^{2}}
+endsnippet
+
+snippet ffpunktladning "Kraft på punktladning" iA
+F = q \cdot E
+endsnippet
+
+snippet fdeltaelektriskkin "ændring i kintetisk energi af p-ladning" iA
+\Delta E_{kin} = U \cdot q
+endsnippet
+
+snippet ffbpunkt "Kraft på p-ladning i magnet felt" iA
+F_{B} = q \cdot v \cdot B \cdot \sin (a) 
+endsnippet
+
+snippet fflaplace "Laplace's law for conductors in magenetic fields" iA
+F_{l} = I \cdot L \cdot B \cdot \sin (a)
+endsnippet
+
+snippet fmagnetiskflux "Magnetic flux, A = Areal, a = angle from dimension orthogonal to A and the direction of the magnetic field" iA
+\Phi _{B} = B \cdot A \cdot \cos (a)
+endsnippet
+
+snippet ffaradayinduktion "Faraday's law for induktion in conductors" iA
+U_{ind} = - \frac{d \Phi _{B}}{dt}
+endsnippet
+
+snippet finduceretu "Induceret spændingsfald" iA
+U_{ind} = B \cdot L \cdot v
+endsnippet
+
+snippet fecharge "electron charge" iA
+-1.6021766 \cdot 10^{-19} C
+endsnippet
+
+snippet fpcharge "proton charge" iA
+1.6021766 \cdot 10^{-19} C
+endsnippet
+
+snippet fcoulombconstant "Coulomb constant" iA
+8.9876 \cdot 10^{9} \cfrac{N \cdot m^{2}}{C^{2}}
+endsnippet
+
+snippet fvacuumpermittivity "Vacuum permittivity" iA
+8.854 \cdot 10^{-12} \frac{F}{m}
+endsnippet
+
+###### Bølger
+
+snippet fwavespeed "Udbredelses fart af bølge" iA
+v = \lambda \cdot f
+endsnippet
+
+snippet fgitter "Gitter ligning" iA
+n \cdot \lambda = d \cdot \sin (\theta _{n})
+endsnippet
+
+###### Atomer og atomkerner
+
+snippet "fefoton(f|l)" "Foton energi |fefoton|" riA
+`!p 
+if match.group(1) == 'f':
+	snip.rv = r"E_{\gamma} = h \cdot f"
+elif match.group(1) == 'l':
+	snip.rv = r"E_{\gamma} = h \cdot c \fr{1}{\lambda}"`
+endsnippet
+
+snippet "fpfoton(f|l)" "Foton impuls |fpfoton|" riA
+`!p 
+if match.group(1) == 'f':
+	snip.rv = r"p_{\gamma} = h \cdot f \fr{1}{c}"
+elif match.group(1) == 'l':
+	snip.rv = r"p_{\gamma} = \fr{h}{\lambda}"`
+endsnippet
+
+snippet febinding "Energi frigivet eller påkrævet ved nuclear reaktion" iA
+Q = -\Delta m \cdot c^{2}
+endsnippet
+
+###### MOVEMENT
+
+snippet fekin "Kinetisk energi" iA
+E_{kin} = \frac{1}{2} \cdot m \cdot v^{2}
+endsnippet
+
+snippet fgennemsnitsfart "Gennemsnits fart" iA
+v = \cfrac{\Delta s}{\Delta t}
+endsnippet
+
+snippet fkonstantacceleration "Bevægelse med konstant acceleration" iA
+s(t) = \frac{1}{2} \cdot a \cdot t^{2} + v_{0} \cdot t + s_{0}
+endsnippet
+
+snippet "fvj[;|æ]vncirkel" "Fart i jævn cirkel bevægelse |fvjævncirkel|" riA
+v = \rfc{2 \cdot \pi \cdot r}{T}
+endsnippet
+
+snippet "faj[;|æ]vncirkel(v|T)" "Acceleration i jævn cirkel bevægelse |fajævncirkel|" riA
+`!p
+if match.group(1) == 'v':
+	snip.rv = r"a = \fr{v^{2}}{T}"
+elif match.group(1) == 'T':
+	snip.rv = r"a = \rfc{4 \cdot \pi^{2}}{T^{2}} \cdot r"`
+endsnippet
+
+snippet fpimp "Impuls" iA
+p = m \cdot v
+endsnippet
+
+snippet fdefpimp "Definition af kraft ved impuls" iA
+\fr{dp}{t} = F
+endsnippet
+
+snippet farbejde "Arbejde" iA
+A = F \cdot \Delta s \cdot \cos (\theta)
+endsnippet
+
+###### NUCLEAR PHYSICS
+
+snippet fantalkerner "Antal kerner til t" iA
+N(t) = N_{0} \cdot e^{-k * t}
+endsnippet
+
+snippet faktivitet "Aktivitet"
+A(t) = k \cdot N(t)
+endsnippet
+
+snippet fproduktionsrate "Produktionsrate"
+R = \sigma \cdot I \cdot n_{t}
+endsnippet
+
+snippet ftransmission "Transmision"
+T = \rfc{I(x_{2})}{I(x_{1})}
+endsnippet
+
+snippet ftransmissionnul "Transmission ved I nul"
+T &= \cfrac{I(x_{2})}{I(x_{1})}\\\\
+x_{1} = 0 m \implies T &= \cfrac{I(x_{2})}{I_{0}} = e^{-\mu \cdot x}\\\\
+endsnippet
+
+snippet fmindskningafintensitet "I prop to k"
+I(r) &\propto \frac{1}{r^{2}}\\\\
+\implies \cfrac{I(r_{1})}{I(r_{0})} &= \cfrac{k \cdot \cfrac{1}{r_{1}^{2}}}{k \cdot \cfrac{1}{r_{0}^{2}}} = \cfrac{r_{0}^{2}}{r_{1}^{2}} \\\\  
+endsnippet
+
+snippet "f[\;|æ]kvivalentdosis" "Ækvivalent dosis |fækvivalentdosis|" riA
+H = \cfrac{\Delta E}{\Delta m} \cdot w_{r}
+endsnippet
+
+snippet fbm "Beta minus henfald"
+ v^{${1:A}}_{${2:Z}}X \xrightarrow{\beta ^-} ~ ^{$1}_{`!p snip.rv = numberplus(1, t[2])`}Y + ~ ^{0}_{-1}e + \overset{\_}{v}
+endsnippet
+
+snippet fbp "Beta plus henfald"
+^{${1:A}}_{${2:Z}}X \xrightarrow{\beta ^+} ~ ^{$1}_{`!p snip.rv = numberplus(-1, t[2])`}Y + ^{0}_{1}e + {v}
+endsnippet
+
+snippet falpha "Alpha henfald"
+^{${1:A}}_{${2:Z}}X \xrightarrow{\alpha} ~ ^{`!p snip.rv = numberplus(-4, t[1])`}_{`!p snip.rv = numberplus(-2, t[2])`}{Y + ^{4}_{2}He 
+endsnippet
+
+snippet fecdecay "K decay"
+^{${1:A}}_{${2:Z}}X + ~ ^{0}_{-1}e \xrightarrow{EC} ~ ^{$1}_{`!p snip.rv = numberplus(-1, t[2])`}Y + {v}
+endsnippet
+
+snippet fceffektivhalveringstid "Effektiv halveringstid" iA
+T_{\sfrac{1}{2}eff} = \cfrac{T_{\sfrac{1}{2}bio} \cdot T_{\sfrac{1}{2}}}{T_{\sfrac{1}{2}bio} + T_{\sfrac{1}{2}}}
+endsnippet
+
+snippet fdosisinternkilde "Dosis fra internkilde" iA
+D = \cfrac{A_{0} \cdot T_{\sfrac{1}{2}eff} ~ \cdot \langle E \rangle}{\ln (2) \cdot \Delta m}
+endsnippet
+
+snippet fgammadosishastighed "Dosis hastighed fra punktkilde"
+D' = \Gamma \cdot \cfrac{A}{x^{2}}
+endsnippet
+
+################## Logic ##########################################
+
+snippet rwr "Logical and" iA
+\land
+endsnippet
+
+snippet fwer "Logical or" iA
+\lor
+endsnippet
+
+snippet rwer "Logical implication" iA
+\rightarrow
+endsnippet
+
+snippet wrew "Logical equivalence" iA
+\equiv
+endsnippet
+
+snippet fww "Logical negation" iA
+\neg
+endsnippet
+
+snippet lrpp "Left right parenthesis" iA
+($1)$0
+endsnippet
+
+
+snippet \lrpp "Left right parenthesis" iA
+\left($1\right)$0
+endsnippet
+
+snippet lrpb "Left right bracket" iA
+[$1]$0
+endsnippet
+
+snippet lrpc "Left right curly brackets" iA
+\\{$1\\}$0
+endsnippet
+
+snippet lrpl "Left right |" iA
+|$1|$0
+endsnippet
+
+snippet lrpv "Left right <>" iA
+\langle $1\rangle$0
+endsnippet
+
+snippet lproof "proof box for logic" bA
+\setcounter{equation}{0}
+\begin{mdframed}
+\begin{align}
+$0
+\end{align}
+\end{mdframed}
+endsnippet
+
+################################# TEMPORARY SNIPPETS ##############
+
+snippet lmod "Mod n" iA
+(\text{mod $1})$0
+endsnippet
+
+snippet \box "Box" bA
+\begin{$1box}{${2:title}}
+$0
+\end{$1box}
+endsnippet
+
+snippet lrpd "Double bracket [[]]" iA
+\llbracket $1\rrbracket$0
+endsnippet
+
+################################# ALGORITHMS AND DATA STRUCTURES ##
+
+snippet \path "Path" iA
+\overset{P_{$1}}{\rightsquigarrow}
+endsnippet
+
+snippet \graph "Graph" iA
+G = (V,E)
+endsnippet
