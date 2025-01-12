@@ -2,7 +2,8 @@ return {
  "neovim/nvim-lspconfig",
  dependencies = {
      "hrsh7th/nvim-cmp",
-     "hrsh7th/cmp-nvim-lsp"
+     "hrsh7th/cmp-nvim-lsp",
+     'hrsh7th/cmp-path',
  },
  config = function ()
      local lspconfig_defaults = require('lspconfig').util.default_config
@@ -81,6 +82,7 @@ return {
      cmp.setup({
          sources = {
              {name = 'nvim_lsp'},
+             {name = 'path'},
          },
          snippet = {
              expand = function(args)
