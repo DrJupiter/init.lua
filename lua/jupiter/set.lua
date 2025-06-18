@@ -23,9 +23,9 @@ vim.opt.updatetime = 50
 
 vim.opt.colorcolumn = "80"  -- Highlights the 80th column
 
-vim.opt.wrap = false         -- Enables/Disables line wrapping
-
-
-
+vim.opt.wrap = true         -- Enables/Disables line wrapping
+vim.opt.linebreak  = true   -- wrap at word boundaries
+vim.opt.breakindent= true   -- keep indentation on wrapped parts
+vim.opt.textwidth = 80
 
 
