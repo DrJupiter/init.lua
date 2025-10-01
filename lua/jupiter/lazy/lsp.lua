@@ -1,7 +1,7 @@
 local mason_packages = {
   "lua-language-server",
   "basedpyright",
-  "ruff-lsp",
+  "ruff",
   "rust-analyzer",
   "clangd",
   "dockerfile-language-server",
@@ -94,7 +94,7 @@ return {
             },
           },
         },
-        ruff_lsp = {},
+        ruff = {},
         rust_analyzer = {},
         clangd = {},
         dockerls = {},
