@@ -1,8 +1,9 @@
 return {
-  "EdenEast/nightfox.nvim" , -- lazy
+  "catppuccin/nvim", -- lazy
+  name="catppuccin-latte",
  lazy = false,
  priority = 1000,
  config = function()
-     vim.cmd([[colorscheme terafox]])
+     vim.cmd([[colorscheme catppuccin-latte]])
  end
 }
