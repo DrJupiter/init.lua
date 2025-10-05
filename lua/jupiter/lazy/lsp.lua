@@ -13,9 +13,32 @@ local mason_packages = {
   "css-lsp",
   "typescript-language-server",
   "svelte-language-server",
+  "jdtls",
 }
 
 return {
+  {
+    "nvim-java/nvim-java",
+    dependencies = {
+      "nvim-java/lua-async-await",
+      "nvim-java/nvim-java-refactor",
+      "nvim-java/nvim-java-core",
+      "nvim-java/nvim-java-test",
+      "nvim-java/nvim-java-dap",
+      "MunifTanjim/nui.nvim",
+      "mfussenegger/nvim-dap",
+      {
+        "JavaHello/spring-boot.nvim",
+        commit = "218c0c26c14d99feca778e4d13f5ec3e8b1b60f0",
+      },
+      {
+        "williamboman/mason.nvim",
+      },
+    },
+    config = function()
+      require("java").setup()
+    end,
+  },
   {
     "williamboman/mason.nvim",
     build = ":MasonUpdate",
@@ -42,6 +65,7 @@ return {
       "hrsh7th/cmp-nvim-lsp",
       "hrsh7th/cmp-path",
       "williamboman/mason.nvim",
+      "nvim-java/nvim-java",
     },
     config = function()
       local cmp = require("cmp")
@@ -106,6 +130,7 @@ return {
         cssls = {},
         ts_ls = {},
         svelte = {},
+        jdtls = {},
       }
 
       for server, cfg in pairs(server_settings) do
@@ -131,6 +156,8 @@ return {
           ["<C-CR>"] = cmp.mapping.confirm({ select = true }),
         }),
       })
+
+      require("lspconfig").jdtls.setup({})
     end,
   },
 }
