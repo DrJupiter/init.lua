@@ -52,11 +52,17 @@ return {
     config = function()
       local cmp = require("cmp")
       local cmp_capabilities = require("cmp_nvim_lsp").default_capabilities()
+      local has_modern_lsp = type(vim.lsp) == "table"
+        and type(vim.lsp.enable) == "function"
+        and type(vim.lsp.config) == "function"
 
-      local defaults = rawget(vim.lsp.config, "*") or {}
-      vim.lsp.config("*", vim.tbl_deep_extend("force", {}, defaults, {
-        capabilities = vim.tbl_deep_extend("force", {}, defaults.capabilities or {}, cmp_capabilities),
-      }))
+      if has_modern_lsp then
+        local ok, defaults = pcall(vim.lsp.config, "*")
+        defaults = ok and defaults or {}
+        vim.lsp.config("*", vim.tbl_deep_extend("force", {}, defaults, {
+          capabilities = vim.tbl_deep_extend("force", {}, defaults.capabilities or {}, cmp_capabilities),
+        }))
+      end
 
       vim.api.nvim_create_autocmd("LspAttach", {
         desc = "LSP keymaps",
@@ -214,14 +220,37 @@ return {
         },
       }
 
-      for server, cfg in pairs(server_settings) do
-        if cfg and next(cfg) ~= nil then
-          local existing = rawget(vim.lsp.config, server) or {}
-          vim.lsp.config(server, vim.tbl_deep_extend("force", {}, existing, cfg))
+      if has_modern_lsp then
+        for server, cfg in pairs(server_settings) do
+          if cfg and next(cfg) ~= nil then
+            local _, existing = pcall(vim.lsp.config, server)
+            existing = existing or {}
+            local merged = vim.tbl_deep_extend("force", {}, existing, cfg)
+            merged.capabilities = vim.tbl_deep_extend(
+              "force",
+              {},
+              existing.capabilities or {},
+              cmp_capabilities,
+              cfg.capabilities or {}
+            )
+            vim.lsp.config(server, merged)
+          end
+        end
+
+        vim.lsp.enable(vim.tbl_keys(server_settings))
+      else
+        local ok, lspconfig = pcall(require, "lspconfig")
+        if ok then
+          for server, cfg in pairs(server_settings) do
+            if cfg and next(cfg) ~= nil and lspconfig[server] then
+              local fallback_cfg = vim.tbl_deep_extend("force", {}, cfg, {
+                capabilities = cmp_capabilities,
+              })
+              lspconfig[server].setup(fallback_cfg)
+            end
+          end
         end
       end
-
-      vim.lsp.enable(vim.tbl_keys(server_settings))
 
       cmp.setup({
         sources = {

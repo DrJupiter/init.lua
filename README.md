@@ -31,6 +31,8 @@ This configuration is a Lua-based setup for Neovim, leveraging powerful plugins 
 - **Modern Plugin Management** with lazy loading
 - **Enhanced Syntax Highlighting** using Treesitter
 - **Language Server Protocol (LSP)** for code intelligence and diagnostics
+- **Java, Kotlin, and Android Tooling** with dedicated language servers, debugging,
+  and formatting integrations
 - **File Navigation** with Telescope fuzzy finder
 - **Custom Key Mappings** for improved workflow
 - **Tailored Editor Settings** for readability and efficiency
@@ -106,6 +108,15 @@ Telescope settings in `telescope.lua` enable efficient searching for files, symb
 ### Language Server Protocol (LSP)
 
 The `lsp.lua` file manages Neovim’s LSP integrations, enabling IDE-like features such as autocompletion, diagnostics, and navigation. Supported languages and servers can be customized within this file.
+
+#### Java & Android Development
+
+This configuration ships with first-class support for Android projects:
+
+- **Language Servers**: `jdtls` for Java, `kotlin_language_server` for Kotlin, and `android_language_server` for Android-specific XML and build tooling are configured through Neovim’s modern `vim.lsp` interface.
+- **Tooling via Mason**: Debug adapters (`java-debug-adapter`, `java-test`) and formatters (`google-java-format`) are automatically installed alongside the language servers.
+- **Syntax Highlighting**: Tree-sitter parsers for Java, Kotlin, and XML are ensured so Android source, Gradle build scripts, and manifests benefit from rich highlighting.
+- **Formatting & Diagnostics**: Java buffers use Google’s style guide defaults, and LSP-powered diagnostics provide linting feedback across Java, Kotlin, and Android resources.
 
 ### Editor Settings
 
