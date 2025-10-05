@@ -13,6 +13,7 @@ local mason_packages = {
   "css-lsp",
   "typescript-language-server",
   "svelte-language-server",
+  "jdtls",
 }
 
 return {
@@ -130,6 +131,114 @@ return {
         mapping = cmp.mapping.preset.insert({
           ["<C-CR>"] = cmp.mapping.confirm({ select = true }),
         }),
+      })
+    end,
+  },
+  {
+    "mfussenegger/nvim-jdtls",
+    ft = { "java" },
+    dependencies = {
+      "neovim/nvim-lspconfig",
+      "williamboman/mason.nvim",
+      "hrsh7th/cmp-nvim-lsp",
+    },
+    config = function()
+      local uv = vim.uv or vim.loop
+
+      local function setup_jdtls()
+        local install_dir = vim.fn.stdpath("data") .. "/mason/packages/jdtls"
+        if not uv.fs_stat(install_dir) then
+          vim.notify("Mason package 'jdtls' is not installed", vim.log.levels.ERROR)
+          return
+        end
+
+        local root_markers = {
+          "mvnw",
+          "gradlew",
+          "pom.xml",
+          "build.gradle",
+          ".git",
+        }
+
+        local root_dir = vim.fs.root(0, root_markers)
+          or vim.fs.dirname(vim.api.nvim_buf_get_name(0))
+        if not root_dir then
+          return
+        end
+
+        local project_name = vim.fs.basename(root_dir)
+        local workspace_dir = vim.fn.stdpath("data") .. "/java-workspaces/" .. project_name
+
+        local jdtls_path = install_dir
+        local launcher_jar = vim.fn.glob(jdtls_path .. "/plugins/org.eclipse.equinox.launcher_*.jar")
+        if launcher_jar == "" then
+          vim.notify("Could not find jdtls launcher jar", vim.log.levels.ERROR)
+          return
+        end
+
+        local os_config
+        local sysname = vim.uv.os_uname().sysname
+        if sysname == "Darwin" then
+          os_config = "config_mac"
+        elseif sysname == "Linux" then
+          os_config = "config_linux"
+        else
+          os_config = "config_win"
+        end
+
+        local config_dir = jdtls_path .. "/" .. os_config
+        local java_cmd = vim.fn.exepath("java")
+        if java_cmd == "" then
+          vim.notify("Could not find 'java' executable in PATH", vim.log.levels.ERROR)
+          return
+        end
+
+        local bundles = {}
+
+        local cmp_capabilities = require("cmp_nvim_lsp").default_capabilities()
+        local capabilities = vim.tbl_deep_extend(
+          "force",
+          {},
+          vim.lsp.protocol.make_client_capabilities(),
+          cmp_capabilities
+        )
+
+        local jdtls = require("jdtls")
+        jdtls.start_or_attach({
+          cmd = {
+            java_cmd,
+            "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+            "-Dosgi.bundles.defaultStartLevel=4",
+            "-Declipse.product=org.eclipse.jdt.ls.core.product",
+            "-Dlog.protocol=true",
+            "-Dlog.level=ALL",
+            "-Xms1g",
+            "-Xmx2g",
+            "-jar",
+            launcher_jar,
+            "-configuration",
+            config_dir,
+            "-data",
+            workspace_dir,
+          },
+          root_dir = root_dir,
+          capabilities = capabilities,
+          settings = {
+            java = {},
+          },
+          init_options = {
+            bundles = bundles,
+          },
+        })
+
+        jdtls.setup_dap({ hotcodereplace = "auto" })
+        jdtls.setup.add_commands()
+      end
+
+      vim.api.nvim_create_autocmd("FileType", {
+        group = vim.api.nvim_create_augroup("jupiter-jdtls", { clear = true }),
+        pattern = { "java" },
+        callback = setup_jdtls,
       })
     end,
   },
