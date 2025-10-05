@@ -13,6 +13,12 @@ local mason_packages = {
   "css-lsp",
   "typescript-language-server",
   "svelte-language-server",
+  "jdtls",
+  "kotlin-language-server",
+  "android-language-server",
+  "google-java-format",
+  "java-debug-adapter",
+  "java-test",
 }
 
 return {
@@ -106,6 +112,106 @@ return {
         cssls = {},
         ts_ls = {},
         svelte = {},
+        jdtls = {
+          filetypes = { "java" },
+          root_dir = function(fname)
+            return vim.fs.root(fname, {
+              "gradlew",
+              "gradle.properties",
+              "settings.gradle",
+              "settings.gradle.kts",
+              "mvnw",
+              "pom.xml",
+              "build.gradle",
+              "build.gradle.kts",
+              ".git",
+            })
+              or vim.loop.cwd()
+          end,
+          on_new_config = function(config, root)
+            root = root or vim.loop.cwd()
+            local registry = require("mason-registry")
+            local function jar_glob(pkg_name, pattern)
+              local ok, pkg = pcall(registry.get_package, pkg_name)
+              if not ok then
+                return {}
+              end
+              local install_dir = pkg:get_install_path()
+              return vim.fn.glob(install_dir .. pattern, 0, 1)
+            end
+
+            local bundles = {}
+            for _, jar in ipairs(jar_glob("java-debug-adapter", "/extension/server/com.microsoft.java.debug.plugin-*.jar")) do
+              table.insert(bundles, jar)
+            end
+            for _, jar in ipairs(jar_glob("java-test", "/extension/server/*.jar")) do
+              table.insert(bundles, jar)
+            end
+
+            config.cmd = {
+              "jdtls",
+              "-data",
+              string.format("%s/jdtls/%s", vim.fn.stdpath("data"), vim.fn.sha256(root)),
+            }
+            config.init_options = config.init_options or {}
+            config.init_options.bundles = bundles
+          end,
+          settings = {
+            java = {
+              format = {
+                enabled = true,
+                settings = {
+                  url = "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
+                  profile = "GoogleStyle",
+                },
+              },
+              saveActions = {
+                organizeImports = true,
+              },
+              completion = {
+                favoriteStaticMembers = {
+                  "java.util.Objects.requireNonNull",
+                  "java.util.Objects.requireNonNullElse",
+                  "org.junit.Assert.*",
+                },
+                filteredTypes = {
+                  "com.sun.*",
+                  "io.micrometer.shaded.*",
+                  "java.awt.*",
+                  "jdk.*",
+                  "sun.*",
+                },
+              },
+              contentProvider = { preferred = "fernflower" },
+              signatureHelp = { enabled = true },
+            },
+          },
+        },
+        kotlin_language_server = {
+          filetypes = { "kotlin" },
+          root_dir = function(fname)
+            return vim.fs.root(fname, {
+              "settings.gradle",
+              "settings.gradle.kts",
+              "build.gradle",
+              "build.gradle.kts",
+              ".git",
+            })
+              or vim.loop.cwd()
+          end,
+        },
+        android_language_server = {
+          filetypes = { "kotlin", "java", "xml" },
+          root_dir = function(fname)
+            return vim.fs.root(fname, {
+              "AndroidManifest.xml",
+              "build.gradle",
+              "build.gradle.kts",
+              ".git",
+            })
+              or vim.loop.cwd()
+          end,
+        },
       }
 
       for server, cfg in pairs(server_settings) do
