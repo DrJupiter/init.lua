@@ -65,6 +65,7 @@ return {
           vim.keymap.set("n", "go", lsp_buf.type_definition, opts)
           vim.keymap.set("n", "gr", lsp_buf.references, opts)
           vim.keymap.set("n", "gs", lsp_buf.signature_help, opts)
+          vim.keymap.set("n", "<leader>rn", lsp_buf.rename, { buffer = event.buf, desc = "LSP rename symbol" })
           vim.keymap.set("n", "<F2>", lsp_buf.rename, opts)
           vim.keymap.set({ "n", "x" }, "<F3>", function()
             lsp_buf.format({ async = true })
