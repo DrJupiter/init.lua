@@ -16,6 +16,7 @@ Welcome to my Neovim configuration repository! This setup is designed to create 
   - [Syntax Highlighting with Treesitter](#syntax-highlighting-with-treesitter)
   - [Fuzzy Finder - Telescope](#fuzzy-finder---telescope)
   - [Language Server Protocol (LSP)](#language-server-protocol-lsp)
+  - [Debugging](#debugging)
   - [Editor Settings](#editor-settings)
 - [Contributing](#contributing)
 - [License](#license)
@@ -34,6 +35,7 @@ This configuration is a Lua-based setup for Neovim, leveraging powerful plugins 
 - **File Navigation** with Telescope fuzzy finder
 - **Custom Key Mappings** for improved workflow
 - **Tailored Editor Settings** for readability and efficiency
+- **Integrated Debugging** for Python, Rust, and C++ via nvim-dap, dap-ui, and virtual text
 
 ---
 
@@ -46,6 +48,7 @@ This configuration is a Lua-based setup for Neovim, leveraging powerful plugins 
 - `treesitter.lua`: Configuration for enhanced syntax highlighting via Treesitter.
 - `telescope.lua`: Settings for the Telescope fuzzy finder.
 - `lsp.lua`: Configurations for LSP, providing autocompletion and diagnostics.
+- `dap.lua`: Debugger adapter setup for Python, Rust, and C++.
 - `set.lua`: Editor settings like indentation, line numbers, etc.
 
 ---
@@ -106,6 +109,10 @@ Telescope settings in `telescope.lua` enable efficient searching for files, symb
 ### Language Server Protocol (LSP)
 
 The `lsp.lua` file manages Neovim’s LSP integrations, enabling IDE-like features such as autocompletion, diagnostics, and navigation. Supported languages and servers can be customized within this file.
+
+### Debugging
+
+Integrated debugging support lives in `dap.lua`, combining `nvim-dap`, `nvim-dap-ui`, `nvim-dap-python`, and virtual text helpers. Adapters for Python (`debugpy`) and Rust/C++ (`codelldb`) are installed through Mason—run `:MasonInstall debugpy codelldb` once and they are ready to use. Core key bindings mirror VS Code defaults: `<F5>` to launch/continue, `<F10>/<F11>/<F12>` to step, `<leader>db` to toggle breakpoints, and `<leader>du`/`<leader>dr` for the UI or REPL. Evaluate values inline with `<leader>de`. Python buffers automatically debug the current file, while C++/Rust sessions prompt for the compiled binary or let you attach to a running process.
 
 ### Editor Settings
 
