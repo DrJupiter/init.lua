@@ -25,4 +25,17 @@ vim.opt.colorcolumn = "80"  -- Highlights the 80th column
 
 vim.opt.wrap = true         -- Enables/Disables line wrapping
 
+local osc52 = require("vim.clipboard.osc52")
+vim.g.clipboard = {
+  name = "osc52",
+  copy = {
+    ["+"] = osc52.copy("+"),
+    ["*"] = osc52.copy("*"),
+  },
+  paste = {
+    ["+"] = osc52.paste("+"),
+    ["*"] = osc52.paste("*"),
+  },
+}
+vim.opt.clipboard:append("unnamedplus")
 
