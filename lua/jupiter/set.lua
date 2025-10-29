@@ -26,16 +26,35 @@ vim.opt.colorcolumn = "80"  -- Highlights the 80th column
 vim.opt.wrap = true         -- Enables/Disables line wrapping
 local has_osc52, osc52 = pcall(require, "vim.ui.clipboard.osc52")
 if has_osc52 then
+  local clipboard_cache = {
+    ["+"] = { lines = {}, regtype = "v" },
+    ["*"] = { lines = {}, regtype = "v" },
+  }
+
+  local osc_copy_plus = osc52.copy("+")
+  local osc_copy_star = osc52.copy("*")
   vim.g.clipboard = {
     name = "osc52",
     copy = {
-      ["+"] = osc52.copy("+"),
-      ["*"] = osc52.copy("*"),
+      ["+"] = function(lines, regtype)
+        clipboard_cache["+"] = { lines = vim.deepcopy(lines), regtype = regtype }
+        osc_copy_plus(lines)
+      end,
+      ["*"] = function(lines, regtype)
+        clipboard_cache["*"] = { lines = vim.deepcopy(lines), regtype = regtype }
+        osc_copy_star(lines)
+      end,
     },
     paste = {
-      ["+"] = osc52.paste("+"),
-      ["*"] = osc52.paste("*"),
-    },
+      ["+"] = function()
+        local cache = clipboard_cache["+"] or {}
+        return cache.lines or {}, cache.regtype or "v"
+      end,
+      ["*"] = function()
+        local cache = clipboard_cache["*"] or {}
+        return cache.lines or {}, cache.regtype or "v"
+      end,
+  },
+    cache_enabled = 0,
   }
-  vim.opt.clipboard:append("unnamedplus")
 end
