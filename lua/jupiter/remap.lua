@@ -1,5 +1,38 @@
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
-vim.keymap.set("n", "<Tab>", ':w<CR>', { desc = 'Save current buffer' })
+
+local function buf_has_lsp_formatter(bufnr)
+    local clients
+    if vim.lsp.get_clients then
+        clients = vim.lsp.get_clients({ bufnr = bufnr }) or {}
+    else
+        clients = {}
+        for _, client in ipairs(vim.lsp.get_active_clients()) do
+            if client.attached_buffers and client.attached_buffers[bufnr] then
+                table.insert(clients, client)
+            end
+        end
+    end
+
+    for _, client in ipairs(clients) do
+        if client.supports_method and client.supports_method("textDocument/formatting") then
+            return true
+        end
+        if client.server_capabilities and client.server_capabilities.documentFormattingProvider then
+            return true
+        end
+    end
+
+    return false
+end
+
+vim.keymap.set("n", "<Tab>", function()
+    local bufnr = vim.api.nvim_get_current_buf()
+    if buf_has_lsp_formatter(bufnr) then
+        vim.lsp.buf.format({ bufnr = bufnr, async = false })
+    end
+
+    vim.cmd.write()
+end, { desc = 'Format (if supported) and save current buffer' })
 
 vim.keymap.set("x", "<leader>p", [["_dP]])
 
