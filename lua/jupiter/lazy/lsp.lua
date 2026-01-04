@@ -3,7 +3,7 @@ local mason_packages = {
     "basedpyright",
     "ruff",
     "rust-analyzer",
-    "clangd",
+    -- "clangd", -- Using custom clangd 22+ for better Doxygen support
     "dockerfile-language-server",
     "lemminx",
     "bash-language-server",
@@ -14,6 +14,51 @@ local mason_packages = {
     "typescript-language-server",
     "svelte-language-server",
 }
+
+-- TEMPORARY: Custom clangd 22+ for Doxygen comment rendering support
+-- Remove this block once Mason ships clangd 22+
+local function ensure_clangd_snapshot()
+    local install_dir = vim.fn.stdpath("data") .. "/clangd-snapshot"
+    local clangd_bin = install_dir .. "/bin/clangd"
+
+    if vim.fn.executable(clangd_bin) == 1 then
+        return clangd_bin
+    end
+
+    -- Download clangd 22 snapshot (async, non-blocking)
+    local url = "https://github.com/clangd/clangd/releases/download/snapshot_20251228/clangd-linux-snapshot_20251228.zip"
+    local zip_path = "/tmp/clangd-snapshot.zip"
+
+    vim.notify("Downloading clangd 22 snapshot...", vim.log.levels.INFO)
+
+    vim.fn.jobstart({
+        "sh", "-c",
+        string.format(
+            "curl -sL -o %s %s && unzip -q -o %s -d /tmp && rm -rf %s && mv /tmp/clangd_snapshot_20251228 %s",
+            zip_path, url, zip_path, install_dir, install_dir
+        )
+    }, {
+        on_exit = function(_, code)
+            if code == 0 then
+                vim.notify("clangd 22 snapshot installed! Restart Neovim to use it.", vim.log.levels.INFO)
+            else
+                vim.notify("Failed to install clangd 22 snapshot", vim.log.levels.ERROR)
+            end
+        end,
+    })
+
+    -- Return nil for now, will be available after restart
+    return nil
+end
+
+local function get_clangd_cmd()
+    local snapshot_bin = ensure_clangd_snapshot()
+    if snapshot_bin then
+        return { snapshot_bin, "--background-index", "--clang-tidy" }
+    end
+    -- Fallback to Mason or system clangd
+    return { "clangd", "--background-index", "--clang-tidy" }
+end
 
 return {
     {
@@ -100,7 +145,9 @@ return {
                 },
                 ruff = {},
                 rust_analyzer = {},
-                clangd = {},
+                clangd = {
+                    cmd = get_clangd_cmd(),
+                },
                 dockerls = {},
                 lemminx = {},
                 bashls = {},
