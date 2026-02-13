@@ -160,12 +160,12 @@ local function current_branch()
 end
 
 local docker_colors = {
-  "#cc241d",
-  "#98971a",
-  "#d79921",
-  "#458588",
-  "#b16286",
-  "#689d6a",
+  "#d20f39",
+  "#40a02b",
+  "#df8e1d",
+  "#1e66f5",
+  "#ea76cb",
+  "#179299",
 }
 
 local function define_docker_highlights()
