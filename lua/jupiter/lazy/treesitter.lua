@@ -1,35 +1,84 @@
 return {
     "nvim-treesitter/nvim-treesitter",
     build = ":TSUpdate",
-    config = function ()
-        local configs = require("nvim-treesitter.configs")
+    config = function()
+        local treesitter = require("nvim-treesitter")
+        local parsers = require("nvim-treesitter.parsers")
+        local installing = {}
 
-        configs.setup({
-  -- A list of parser names, or "all" (the listed parsers MUST always be installed)
-    ensure_installed = {"lua", "vim", "vimdoc", "query", "markdown", "markdown_inline", "latex", "rust", "html", "javascript", "python", "typescript", "svelte", "c", "cpp"},
+        treesitter.setup({})
 
-  -- Install parsers synchronously (only applied to `ensure_installed`)
-  sync_install = false,
+        local function is_installed(lang)
+            return vim.tbl_contains(treesitter.get_installed("parsers"), lang)
+        end
 
-  -- Automatically install missing parsers when entering buffer
-  -- Recommendation: set to false if you don't have `tree-sitter` CLI installed locally
-  auto_install = true,
+        local function is_allowed(lang)
+            local parser = parsers[lang]
+            if not parser then
+                return false
+            end
+            return (parser.tier or 4) <= 2
+        end
 
-  highlight = {
-    enable = true,
+        local function notify_if_ui(msg, level)
+            if #vim.api.nvim_list_uis() > 0 then
+                vim.notify(msg, level)
+            end
+        end
 
-    -- NOTE: these are the names of the parsers and not the filetype. (for example if you want to
-    -- disable highlighting for the `tex` filetype, you need to include `latex` in this list as this is
-    -- the name of the parser)
-    -- list of language that will be disabled
-    -- Or use a function for more flexibility, e.g. to disable slow treesitter highlight for large files
+        vim.api.nvim_create_autocmd("FileType", {
+            group = vim.api.nvim_create_augroup("jupiter_treesitter", { clear = true }),
+            desc = "Auto-install/start treesitter parser",
+            callback = function(args)
+                local ft = vim.bo[args.buf].filetype
+                local lang = vim.treesitter.language.get_lang(ft) or ft
+                if lang == "" then
+                    return
+                end
 
-    -- Setting this to true will run `:h syntax` and tree-sitter at the same time.
-    -- Set this to `true` if you depend on 'syntax' being enabled (like for indentation).
-    -- Using this option may slow down your editor, and you may see some duplicate highlights.
-    -- Instead of true it can also be a list of languages
-    additional_vim_regex_highlighting = false,
-  },
+                local ui_attached = #vim.api.nvim_list_uis() > 0
+                local known = parsers[lang] ~= nil
+
+                if ui_attached and known and is_allowed(lang) and not is_installed(lang) and not installing[lang] then
+                    local ok, task_or_err = pcall(treesitter.install, { lang })
+                    if not ok then
+                        notify_if_ui("treesitter install failed for " .. lang .. ": " .. tostring(task_or_err), vim.log.levels.WARN)
+                        return
+                    end
+
+                    local task = task_or_err
+                    if task and type(task.await) == "function" then
+                        installing[lang] = true
+                        task:await(function(err, success)
+                            installing[lang] = nil
+                            if err or not success then
+                                notify_if_ui(
+                                    "treesitter install failed for " .. lang .. ": " .. tostring(err or "unknown error"),
+                                    vim.log.levels.WARN
+                                )
+                                return
+                            end
+
+                            if vim.api.nvim_buf_is_valid(args.buf) and vim.bo[args.buf].filetype == ft then
+                                local ok_start_after, err_start_after = pcall(vim.treesitter.start, args.buf)
+                                if not ok_start_after then
+                                    notify_if_ui(
+                                        "treesitter start failed for " .. lang .. ": " .. tostring(err_start_after),
+                                        vim.log.levels.DEBUG
+                                    )
+                                end
+                            end
+                        end)
+                    end
+
+                    return
+                end
+
+                local ok_start, err_start = pcall(vim.treesitter.start, args.buf)
+                if not ok_start and known and ui_attached then
+                    notify_if_ui("treesitter start failed for " .. lang .. ": " .. tostring(err_start), vim.log.levels.DEBUG)
+                end
+            end,
         })
     end
 }
