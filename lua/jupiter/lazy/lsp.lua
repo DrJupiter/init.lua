@@ -1,63 +1,55 @@
-local mason_packages = {
-    "lua-language-server",
-    "basedpyright",
-    "ruff",
-    "rust-analyzer",
-    -- "clangd", -- Using custom clangd 22+ for better Doxygen support
-    "dockerfile-language-server",
-    "lemminx",
-    "bash-language-server",
-    "json-lsp",
-    "yaml-language-server",
-    "html-lsp",
-    "css-lsp",
-    "typescript-language-server",
-    "svelte-language-server",
+local lsp_servers = {
+    {
+        name = "lua_ls",
+        mason = "lua-language-server",
+        config = {
+            settings = {
+                Lua = {
+                    workspace = { checkThirdParty = false },
+                    telemetry = { enable = false },
+                    hint = { enable = true },
+                },
+            },
+        },
+    },
+    {
+        name = "basedpyright",
+        mason = "basedpyright",
+        config = {
+            settings = {
+                python = {
+                    analysis = {
+                        autoImportCompletions = true,
+                        diagnosticMode = "workspace",
+                        typeCheckingMode = "basic",
+                    },
+                },
+            },
+        },
+    },
+    { name = "ruff", mason = "ruff" },
+    { name = "rust_analyzer", mason = "rust-analyzer" },
+    { name = "clangd", mason = "clangd" },
+    { name = "dockerls", mason = "dockerfile-language-server" },
+    { name = "lemminx", mason = "lemminx" },
+    { name = "bashls", mason = "bash-language-server" },
+    { name = "jsonls", mason = "json-lsp" },
+    { name = "yamlls", mason = "yaml-language-server" },
+    { name = "html", mason = "html-lsp" },
+    { name = "cssls", mason = "css-lsp" },
+    { name = "ts_ls", mason = "typescript-language-server" },
+    { name = "svelte", mason = "svelte-language-server" },
+    { name = "ols", mason = "ols" },
 }
 
--- TEMPORARY: Custom clangd 22+ for Doxygen comment rendering support
--- Remove this block once Mason ships clangd 22+
-local function ensure_clangd_snapshot()
-    local install_dir = vim.fn.stdpath("data") .. "/clangd-snapshot"
-    local clangd_bin = install_dir .. "/bin/clangd"
+local mason_packages = {}
+local server_settings = {}
 
-    if vim.fn.executable(clangd_bin) == 1 then
-        return clangd_bin
+for _, server in ipairs(lsp_servers) do
+    if server.mason then
+        table.insert(mason_packages, server.mason)
     end
-
-    -- Download clangd 22 snapshot (async, non-blocking)
-    local url = "https://github.com/clangd/clangd/releases/download/snapshot_20251228/clangd-linux-snapshot_20251228.zip"
-    local zip_path = "/tmp/clangd-snapshot.zip"
-
-    vim.notify("Downloading clangd 22 snapshot...", vim.log.levels.INFO)
-
-    vim.fn.jobstart({
-        "sh", "-c",
-        string.format(
-            "curl -sL -o %s %s && unzip -q -o %s -d /tmp && rm -rf %s && mv /tmp/clangd_snapshot_20251228 %s",
-            zip_path, url, zip_path, install_dir, install_dir
-        )
-    }, {
-        on_exit = function(_, code)
-            if code == 0 then
-                vim.notify("clangd 22 snapshot installed! Restart Neovim to use it.", vim.log.levels.INFO)
-            else
-                vim.notify("Failed to install clangd 22 snapshot", vim.log.levels.ERROR)
-            end
-        end,
-    })
-
-    -- Return nil for now, will be available after restart
-    return nil
-end
-
-local function get_clangd_cmd()
-    local snapshot_bin = ensure_clangd_snapshot()
-    if snapshot_bin then
-        return { snapshot_bin, "--background-index", "--clang-tidy" }
-    end
-    -- Fallback to Mason or system clangd
-    return { "clangd", "--background-index", "--clang-tidy" }
+    server_settings[server.name] = server.config or {}
 end
 
 return {
@@ -111,53 +103,19 @@ return {
                     vim.keymap.set("n", "gr", lsp_buf.references, opts)
                     vim.keymap.set("n", "gs", lsp_buf.signature_help, opts)
                     vim.keymap.set("n", "<leader>rn", lsp_buf.rename, { buffer = event.buf, desc = "LSP rename symbol" })
-                    vim.keymap.set({'n','v'}, '<leader>ca', vim.lsp.buf.code_action, {buffer = event.buf, desc='Code action'})
-                    vim.keymap.set('n', '<leader>cf', function()
-                        vim.lsp.buf.code_action({ apply = true, context = { only = { 'quickfix', 'source.fixAll' } } })
-                    end, { desc = 'Apply fix' })
+                    vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, {
+                        buffer = event.buf,
+                        desc = "Code action",
+                    })
+                    vim.keymap.set("n", "<leader>cf", function()
+                        vim.lsp.buf.code_action({ apply = true, context = { only = { "quickfix", "source.fixAll" } } })
+                    end, { desc = "Apply fix" })
                     vim.keymap.set({ "n", "x" }, "<F3>", function()
                         lsp_buf.format({ async = true })
                     end, opts)
                     vim.keymap.set("n", "<F4>", lsp_buf.code_action, opts)
                 end,
             })
-
-            local server_settings = {
-                lua_ls = {
-                    settings = {
-                        Lua = {
-                            workspace = { checkThirdParty = false },
-                            telemetry = { enable = false },
-                            hint = { enable = true },
-                        },
-                    },
-                },
-                basedpyright = {
-                    settings = {
-                        python = {
-                            analysis = {
-                                autoImportCompletions = true,
-                                diagnosticMode = "workspace",
-                                typeCheckingMode = "basic",
-                            },
-                        },
-                    },
-                },
-                ruff = {},
-                rust_analyzer = {},
-                clangd = {
-                    cmd = get_clangd_cmd(),
-                },
-                dockerls = {},
-                lemminx = {},
-                bashls = {},
-                jsonls = {},
-                yamlls = {},
-                html = {},
-                cssls = {},
-                ts_ls = {},
-                svelte = {},
-            }
 
             for server, cfg in pairs(server_settings) do
                 if cfg and next(cfg) ~= nil then
