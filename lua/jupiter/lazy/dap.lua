@@ -1,5 +1,13 @@
 local function path_exists(path)
-  return vim.loop.fs_stat(path) ~= nil
+  return (vim.uv or vim.loop).fs_stat(path) ~= nil
+end
+
+local function mason_install_path(pkg_name)
+  local ok, settings = pcall(require, "mason.settings")
+  if not ok then
+    return nil
+  end
+  return settings.current.install_root_dir .. "/" .. pkg_name
 end
 
 local function get_python_adapter_path()
@@ -13,9 +21,12 @@ local function get_python_adapter_path()
     return nil
   end
 
-  local InstallLocation = require("mason-core.installer.InstallLocation")
-  local install_path = InstallLocation.global():package("debugpy")
-  local os_name = vim.loop.os_uname().sysname
+  local install_path = mason_install_path("debugpy")
+  if not install_path then
+    return nil
+  end
+
+  local os_name = (vim.uv or vim.loop).os_uname().sysname
   if os_name == "Windows_NT" then
     local win_path = install_path .. "\\venv\\Scripts\\python.exe"
     if path_exists(win_path) then
@@ -42,11 +53,13 @@ local function configure_codelldb(dap)
     return
   end
 
-  local InstallLocation = require("mason-core.installer.InstallLocation")
-  local install_path = InstallLocation.global():package("codelldb")
+  local install_path = mason_install_path("codelldb")
+  if not install_path then
+    return
+  end
   local extension_path = install_path .. "/extension/"
   local codelldb_path = extension_path .. "adapter/codelldb"
-  local os_name = vim.loop.os_uname().sysname
+  local os_name = (vim.uv or vim.loop).os_uname().sysname
 
   if os_name == "Darwin" then
     codelldb_path = extension_path .. "adapter/codelldb"

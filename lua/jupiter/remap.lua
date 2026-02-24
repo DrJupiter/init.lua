@@ -1,17 +1,7 @@
 vim.keymap.set("n", "<leader>pv", vim.cmd.Ex)
 
 local function buf_has_lsp_formatter(bufnr)
-    local clients
-    if vim.lsp.get_clients then
-        clients = vim.lsp.get_clients({ bufnr = bufnr }) or {}
-    else
-        clients = {}
-        for _, client in ipairs(vim.lsp.get_active_clients()) do
-            if client.attached_buffers and client.attached_buffers[bufnr] then
-                table.insert(clients, client)
-            end
-        end
-    end
+    local clients = vim.lsp.get_clients({ bufnr = bufnr }) or {}
 
     for _, client in ipairs(clients) do
         if client.supports_method and client.supports_method("textDocument/formatting") then
