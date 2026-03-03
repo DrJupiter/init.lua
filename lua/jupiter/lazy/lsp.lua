@@ -1,19 +1,56 @@
-local mason_packages = {
-    "lua-language-server",
-    "basedpyright",
-    "ruff",
-    "rust-analyzer",
-    "clangd",
-    "dockerfile-language-server",
-    "lemminx",
-    "bash-language-server",
-    "json-lsp",
-    "yaml-language-server",
-    "html-lsp",
-    "css-lsp",
-    "typescript-language-server",
-    "svelte-language-server",
+local lsp_servers = {
+    {
+        name = "lua_ls",
+        mason = "lua-language-server",
+        config = {
+            settings = {
+                Lua = {
+                    workspace = { checkThirdParty = false },
+                    telemetry = { enable = false },
+                    hint = { enable = true },
+                },
+            },
+        },
+    },
+    {
+        name = "basedpyright",
+        mason = "basedpyright",
+        config = {
+            settings = {
+                python = {
+                    analysis = {
+                        autoImportCompletions = true,
+                        diagnosticMode = "workspace",
+                        typeCheckingMode = "basic",
+                    },
+                },
+            },
+        },
+    },
+    { name = "ruff", mason = "ruff" },
+    { name = "rust_analyzer", mason = "rust-analyzer" },
+    { name = "clangd", mason = "clangd" },
+    { name = "dockerls", mason = "dockerfile-language-server" },
+    { name = "lemminx", mason = "lemminx" },
+    { name = "bashls", mason = "bash-language-server" },
+    { name = "jsonls", mason = "json-lsp" },
+    { name = "yamlls", mason = "yaml-language-server" },
+    { name = "html", mason = "html-lsp" },
+    { name = "cssls", mason = "css-lsp" },
+    { name = "ts_ls", mason = "typescript-language-server" },
+    { name = "svelte", mason = "svelte-language-server" },
+    { name = "ols", mason = "ols" },
 }
+
+local mason_packages = {}
+local server_settings = {}
+
+for _, server in ipairs(lsp_servers) do
+    if server.mason then
+        table.insert(mason_packages, server.mason)
+    end
+    server_settings[server.name] = server.config or {}
+end
 
 return {
     {
@@ -66,51 +103,19 @@ return {
                     vim.keymap.set("n", "gr", lsp_buf.references, opts)
                     vim.keymap.set("n", "gs", lsp_buf.signature_help, opts)
                     vim.keymap.set("n", "<leader>rn", lsp_buf.rename, { buffer = event.buf, desc = "LSP rename symbol" })
-                    vim.keymap.set({'n','v'}, '<leader>ca', vim.lsp.buf.code_action, {buffer = event.buf, desc='Code action'})
-                    vim.keymap.set('n', '<leader>cf', function()
-                        vim.lsp.buf.code_action({ apply = true, context = { only = { 'quickfix', 'source.fixAll' } } })
-                    end, { desc = 'Apply fix' })
+                    vim.keymap.set({ "n", "v" }, "<leader>ca", vim.lsp.buf.code_action, {
+                        buffer = event.buf,
+                        desc = "Code action",
+                    })
+                    vim.keymap.set("n", "<leader>cf", function()
+                        vim.lsp.buf.code_action({ apply = true, context = { only = { "quickfix", "source.fixAll" } } })
+                    end, { desc = "Apply fix" })
                     vim.keymap.set({ "n", "x" }, "<F3>", function()
                         lsp_buf.format({ async = true })
                     end, opts)
                     vim.keymap.set("n", "<F4>", lsp_buf.code_action, opts)
                 end,
             })
-
-            local server_settings = {
-                lua_ls = {
-                    settings = {
-                        Lua = {
-                            workspace = { checkThirdParty = false },
-                            telemetry = { enable = false },
-                            hint = { enable = true },
-                        },
-                    },
-                },
-                basedpyright = {
-                    settings = {
-                        python = {
-                            analysis = {
-                                autoImportCompletions = true,
-                                diagnosticMode = "workspace",
-                                typeCheckingMode = "basic",
-                            },
-                        },
-                    },
-                },
-                ruff = {},
-                rust_analyzer = {},
-                clangd = {},
-                dockerls = {},
-                lemminx = {},
-                bashls = {},
-                jsonls = {},
-                yamlls = {},
-                html = {},
-                cssls = {},
-                ts_ls = {},
-                svelte = {},
-            }
 
             for server, cfg in pairs(server_settings) do
                 if cfg and next(cfg) ~= nil then
