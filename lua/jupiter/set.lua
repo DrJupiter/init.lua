@@ -160,12 +160,30 @@ local function current_branch()
 end
 
 local docker_colors = {
-  "#d20f39",
-  "#40a02b",
-  "#df8e1d",
-  "#1e66f5",
-  "#ea76cb",
-  "#179299",
+  "#dc8a78", -- Rosewater
+  "#dd7878", -- Flamingo
+  "#ea76cb", -- Pink
+  "#8839ef", -- Mauve
+  "#d20f39", -- Red
+  "#e64553", -- Maroon
+  "#fe640b", -- Peach
+  "#df8e1d", -- Yellow
+  "#40a02b", -- Green
+  "#179299", -- Teal
+  "#209fb5", -- Sapphire
+  "#1e66f5", -- Blue
+  "#7287fd", -- Lavender
+  "#c6508a", -- Pink-Mauve
+  "#b33a6f", -- Deep Rose
+  "#e07a2f", -- Burnt Orange
+  "#c49b1a", -- Dark Gold
+  "#2d9e4f", -- Forest Green
+  "#1a8c7e", -- Deep Teal
+  "#3578d9", -- Mid Blue
+  "#5c6cdb", -- Indigo
+  "#9c59d1", -- Violet
+  "#d16faf", -- Orchid
+  "#a85738", -- Terracotta
 }
 
 local function define_docker_highlights()
@@ -189,18 +207,12 @@ local function docker_segment()
   end
 
   local hostname = uv.os_gethostname() or ""
-  local hex = hostname:sub(1, 6)
-  local value = tonumber(hex, 16)
-
-  if not value then
-    local sum = 0
-    for i = 1, #hostname do
-      sum = sum + hostname:byte(i)
-    end
-    value = sum
+  local h = 5381
+  for i = 1, #hostname do
+    h = ((h * 33) + hostname:byte(i)) % 0x100000000
   end
 
-  local idx = (value % #docker_colors) + 1
+  local idx = (h % #docker_colors) + 1
   docker_segment_cache = "%#JupiterDocker" .. idx .. "#●🐳●%*"
   return docker_segment_cache
 end
