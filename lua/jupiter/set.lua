@@ -186,14 +186,47 @@ local docker_colors = {
   "#a85738", -- Terracotta
 }
 
+-- 256-colour equivalents, index-for-index with docker_colors above and with the
+-- `colors` array in ~/.config/starship.toml, so both prompts agree in a terminal
+-- without truecolour.
+local docker_cterm_colors = {
+  174, 168, 176, 99, 161, 167, 202, 172,
+  70, 30, 37, 27, 69, 132, 131, 173,
+  178, 35, 29, 68, 62, 134, 169, 95,
+}
+
 local function define_docker_highlights()
   for i, color in ipairs(docker_colors) do
     vim.api.nvim_set_hl(0, "JupiterDocker" .. i, {
       fg = color,
-      ctermfg = i,
+      ctermfg = docker_cterm_colors[i],
       bold = true,
     })
   end
+end
+
+-- FNV-1a with a murmur3 fmix32 finaliser, byte-identical to the bash implementation in
+-- ~/.config/starship.toml. Lua numbers are doubles, so the 32-bit multiply is split into
+-- 16-bit halves to stay under 2^53 and keep every intermediate exact.
+local function mul32(a, b)
+  local ah = math.floor(a / 0x10000)
+  local al = a % 0x10000
+  return (((ah * b) % 0x10000) * 0x10000 + al * b) % 0x100000000
+end
+
+local function fnv1a_fmix32(s)
+  local bxor = bit.bxor
+  local h = 2166136261
+  for i = 1, #s do
+    h = bxor(h, s:byte(i)) % 0x100000000
+    h = mul32(h, 16777619)
+  end
+  h = bxor(h, math.floor(h / 0x10000)) % 0x100000000
+  h = mul32(h, 2246822507)
+  h = bxor(h, math.floor(h / 0x2000)) % 0x100000000
+  h = mul32(h, 3266489909)
+  h = bxor(h, math.floor(h / 0x10000)) % 0x100000000
+  return h
 end
 
 local function docker_segment()
@@ -206,13 +239,24 @@ local function docker_segment()
     return docker_segment_cache
   end
 
-  local hostname = uv.os_gethostname() or ""
-  local h = 5381
-  for i = 1, #hostname do
-    h = ((h * 33) + hostname:byte(i)) % 0x100000000
+  -- These containers run with `network_mode: host`, so every one of them reports the
+  -- host's hostname and hashing it gives them all the same colour. COMPOSE_PROJECT_NAME
+  -- is the per-worktree identifier. Kept in lockstep with ~/.config/starship.toml.
+  local id = vim.env.COMPOSE_PROJECT_NAME
+  if id == nil or id == "" then
+    id = uv.os_gethostname() or ""
   end
 
-  local idx = (h % #docker_colors) + 1
+  local idx
+  local n = id:match("(%d+)$")
+  if n then
+    -- Numbered workspace: stride 5 is coprime with 24, so 1..24 map to 24 distinct,
+    -- well-separated slots with no collisions.
+    idx = (tonumber(n, 10) * 5) % #docker_colors
+  else
+    idx = fnv1a_fmix32(id) % #docker_colors
+  end
+  idx = idx + 1
   docker_segment_cache = "%#JupiterDocker" .. idx .. "#●🐳●%*"
   return docker_segment_cache
 end
