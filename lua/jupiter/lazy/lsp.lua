@@ -42,6 +42,48 @@ local lsp_servers = {
     { name = "ols", mason = "ols" },
 }
 
+local doxygen_inline = { code = "`", tt = "`", em = "*" }
+local doxygen_drop = {
+    a = true, span = true, pre = true, p = true, br = true,
+    table = true, tr = true, td = true, li = true, ul = true, ol = true,
+}
+
+local function strip_doxygen(text)
+    text = text:gsub("\\?<(/?)(%a[%w]*)([^<>]*)>", function(_, tag)
+        tag = tag:lower()
+        return doxygen_inline[tag] or (doxygen_drop[tag] and " ") or nil
+    end)
+    text = text:gsub("`([^`]*)`", function(inner)
+        return "`" .. inner:gsub("\\(%p)", "%1") .. "`"
+    end)
+    return (text:gsub("%%(%a[%w_][%w_]+)", "%1"))
+end
+
+local to_markdown_lines = vim.lsp.util.convert_input_to_markdown_lines
+vim.lsp.util.convert_input_to_markdown_lines = function(input, contents)
+    local lines = to_markdown_lines(input, contents)
+    for i, line in ipairs(lines or {}) do
+        lines[i] = strip_doxygen(line)
+    end
+    return lines
+end
+
+local c_family = { c = true, cpp = true, cuda = true, objc = true, objcpp = true }
+
+local open_floating_preview = vim.lsp.util.open_floating_preview
+vim.lsp.util.open_floating_preview = function(contents, syntax, opts, ...)
+    local source = vim.bo.filetype
+    local buf, win = open_floating_preview(contents, syntax, opts, ...)
+
+    if buf and syntax == "markdown" and c_family[source] then
+        vim.b[buf].cpp_docs = true
+        pcall(function()
+            vim.treesitter.get_parser(buf):parse(true)
+        end)
+    end
+    return buf, win
+end
+
 local mason_packages = {}
 local server_settings = {}
 
@@ -95,7 +137,15 @@ return {
                     local lsp_buf = vim.lsp.buf
                     local opts = { buffer = event.buf }
 
-                    vim.keymap.set("n", "K", lsp_buf.hover, opts)
+                    local client = vim.lsp.get_client_by_id(event.data.client_id)
+                    local hover = lsp_buf.hover
+                    if client.name == "clangd" then
+                        hover = function()
+                            require("jupiter.cppdoc").hover(client, event.buf)
+                        end
+                    end
+
+                    vim.keymap.set("n", "K", hover, opts)
                     vim.keymap.set("n", "gd", lsp_buf.definition, opts)
                     vim.keymap.set("n", "gD", lsp_buf.declaration, opts)
                     vim.keymap.set("n", "gi", lsp_buf.implementation, opts)
