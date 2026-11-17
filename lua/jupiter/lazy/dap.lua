@@ -7,7 +7,7 @@ local function mason_install_path(pkg_name)
   if not ok then
     return nil
   end
-  return settings.current.install_root_dir .. "/" .. pkg_name
+  return settings.current.install_root_dir .. "/packages/" .. pkg_name
 end
 
 local function get_python_adapter_path()
