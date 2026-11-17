@@ -96,7 +96,7 @@ end
 
 return {
     {
-        "williamboman/mason.nvim",
+        "mason-org/mason.nvim",
         build = ":MasonUpdate",
         opts = {
             ensure_installed = mason_packages,
@@ -120,7 +120,7 @@ return {
             "hrsh7th/nvim-cmp",
             "hrsh7th/cmp-nvim-lsp",
             "hrsh7th/cmp-path",
-            "williamboman/mason.nvim",
+            "mason-org/mason.nvim",
         },
         config = function()
             local cmp = require("cmp")
